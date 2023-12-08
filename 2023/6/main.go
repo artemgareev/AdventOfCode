@@ -9,7 +9,7 @@ import (
 
 func main() {
 	dir, _ := os.Getwd()
-	file, err := os.ReadFile(dir + "/5/input.txt")
+	file, err := os.ReadFile(dir + "/6/input.txt")
 	if err != nil {
 		panic(err)
 	}
