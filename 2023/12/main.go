@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 )
 
@@ -20,17 +21,16 @@ func main() {
 
 		springs := parts[0]
 		arrangements := toArray(bytes.Split(parts[1], []byte(",")))
-		p1 += count(springs, arrangements, map[string]int{})
+		p1 += dfs(springs, arrangements, map[string]int{})
 
 		springsExp, arrangementsExp := expand(springs, arrangements)
-		p2 += count(springsExp, arrangementsExp, map[string]int{})
-
+		p2 += dfs(springsExp, arrangementsExp, map[string]int{})
 	}
 	fmt.Println(p1)
 	fmt.Println(p2)
 }
 
-func count(springs []byte, arrangements []int, memo map[string]int) int {
+func dfs(springs []byte, arrangements []int, memo map[string]int) int {
 	if len(springs) == 0 {
 		if len(arrangements) == 0 {
 			return 1
@@ -39,7 +39,7 @@ func count(springs []byte, arrangements []int, memo map[string]int) int {
 	}
 
 	if len(arrangements) == 0 {
-		if contains(springs, '#', -1) {
+		if slices.Contains(springs, '#') {
 			return 0
 		}
 		return 1
@@ -52,16 +52,16 @@ func count(springs []byte, arrangements []int, memo map[string]int) int {
 
 	result := 0
 	if springs[0] == '.' || springs[0] == '?' {
-		result += count(springs[1:], arrangements, memo)
+		result += dfs(springs[1:], arrangements, memo)
 	}
 
-	if springs[0] == '#' || springs[0] == '?' && arrangements[0] <= len(springs) {
-		if !contains(springs, '.', arrangements[0]) && (arrangements[0] == len(springs) || springs[arrangements[0]] != '#') {
-			newSpring := []byte{}
-			if arrangements[0]+1 < len(springs) {
-				newSpring = springs[arrangements[0]+1:]
+	if springs[0] == '#' || springs[0] == '?' {
+		if arrangements[0] <= len(springs) && !slices.Contains(springs[:arrangements[0]], '.') && (arrangements[0] == len(springs) || springs[arrangements[0]] != '#') {
+			if arrangements[0] == len(springs) {
+				result += dfs([]byte{}, arrangements[1:], memo)
+			} else {
+				result += dfs(springs[arrangements[0]+1:], arrangements[1:], memo)
 			}
-			result += count(newSpring, arrangements[1:], memo)
 		}
 	}
 
@@ -71,33 +71,18 @@ func count(springs []byte, arrangements []int, memo map[string]int) int {
 }
 
 func expand(springs []byte, arrangements []int) ([]byte, []int) {
-	arrangementsCopy := make([]int, len(arrangements))
-	copy(arrangementsCopy, arrangements)
+	arrangementsCopy := slices.Clone(arrangements)
 	for i := 0; i < 4; i++ {
 		arrangements = append(arrangements, arrangementsCopy...)
 	}
 
-	springsCopy := make([]byte, len(springs))
-	copy(springsCopy, springs)
+	springsCopy := slices.Clone(springs)
 	for i := 0; i < 4; i++ {
 		springs = append(springs, '?')
 		springs = append(springs, springsCopy...)
 	}
 
 	return springs, arrangements
-}
-
-func contains(arr []byte, val uint8, cap int) bool {
-	if cap == -1 {
-		cap = len(arr)
-	}
-	for i := 0; i < cap; i++ {
-		if arr[i] == val {
-			return true
-		}
-	}
-
-	return false
 }
 
 func toString(arr []int) string {
